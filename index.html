@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reading List</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FBFAF8;
+    --paper-raised: #FFFFFF;
+    --ink: #2A2B27;
+    --ink-soft: #74756D;
+    --ink-faint: #ACADA4;
+    --highlight: #C9A227;
+    --highlight-ink: #4A3A08;
+    --done: #5C8478;
+    --done-bg: #EEF2F0;
+    --line: #EBE9E3;
+    --danger: #B4523F;
+    --radius: 4px;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1C1D1A;
+      --paper-raised: #232420;
+      --ink: #E8E6DE;
+      --ink-soft: #9A9A8E;
+      --ink-faint: #63645A;
+      --highlight: #D6B34A;
+      --highlight-ink: #201801;
+      --done: #7FB3A3;
+      --done-bg: #232B27;
+      --line: #313229;
+      --danger: #E08268;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1C1D1A;
+    --paper-raised: #232420;
+    --ink: #E8E6DE;
+    --ink-soft: #9A9A8E;
+    --ink-faint: #63645A;
+    --highlight: #D6B34A;
+    --highlight-ink: #201801;
+    --done: #7FB3A3;
+    --done-bg: #232B27;
+    --line: #313229;
+    --danger: #E08268;
+  }
+
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 56px 24px 120px;
+  }
+
+  header { margin-bottom: 32px; }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: 30px;
+    line-height: 1.1;
+    margin: 0;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  /* Add form */
+  form.add {
+    padding: 0;
+    margin: 0 0 36px;
+    display: grid;
+    gap: 8px;
+  }
+  form.add .row { display: flex; gap: 8px; }
+  form.add input {
+    width: 100%;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+  form.add input::placeholder { color: var(--ink-faint); }
+  form.add input:focus-visible,
+  button:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--done);
+    outline-offset: 2px;
+  }
+  #url-input { flex: 1.4; }
+  #title-input { flex: 1; }
+  #tag-input { flex: 1; }
+  .add-actions { display: flex; justify-content: flex-end; }
+  button.primary {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: var(--radius);
+    padding: 9px 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  button.primary:hover { opacity: 0.85; }
+  .hint { font-size: 12.5px; color: var(--ink-faint); margin: 0; }
+
+  /* Filters */
+  .filters {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 4px;
+  }
+  .filters button {
+    background: none;
+    border: none;
+    padding: 10px 4px;
+    margin-right: 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--ink-faint);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    position: relative;
+    top: 1px;
+  }
+  .filters button.active {
+    color: var(--ink);
+    border-bottom-color: var(--highlight);
+    font-weight: 500;
+  }
+  .filters button .count { color: var(--ink-faint); font-size: 12.5px; }
+
+  /* List */
+  ul.list { list-style: none; margin: 8px 0 0; padding: 0; }
+  li.item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  li.item.done .title { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-faint); }
+  li.item.done .card { opacity: 0.75; }
+
+  .check {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    margin-top: 3px;
+    border: 1.5px solid var(--ink-faint);
+    border-radius: 4px;
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    background: var(--paper-raised);
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .check:checked {
+    background: var(--done);
+    border-color: var(--done);
+  }
+  .check:checked::after {
+    content: "";
+    width: 5px;
+    height: 9px;
+    border: solid var(--paper-raised);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) translate(-1px, -1px);
+  }
+
+  .card { flex: 1; min-width: 0; }
+  .title {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    line-height: 1.35;
+    color: var(--ink);
+    text-decoration: none;
+    display: inline;
+  }
+  .title:hover { text-decoration: underline; text-decoration-color: var(--highlight); text-decoration-thickness: 2px; }
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+  }
+  .domain { font-size: 12.5px; color: var(--ink-faint); }
+  .tag {
+    font-size: 11.5px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .dot { color: var(--ink-faint); font-size: 10px; }
+
+  .notes-slot { margin-top: 6px; }
+  .note-add-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    cursor: pointer;
+  }
+  .note-add-btn:hover { color: var(--ink-soft); }
+  .note-preview {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    font-style: italic;
+    white-space: pre-wrap;
+    cursor: text;
+  }
+  .note-preview:hover { color: var(--ink); }
+  .note-input {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    margin-top: 2px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink);
+    resize: vertical;
+  }
+
+  .remove {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 6px;
+    opacity: 0;
+    transition: opacity 0.1s ease, color 0.1s ease;
+  }
+  li.item:hover .remove,
+  li.item:focus-within .remove { opacity: 1; }
+  .remove:hover { color: var(--danger); }
+
+  .empty {
+    padding: 48px 4px;
+    text-align: center;
+    color: var(--ink-soft);
+  }
+  .empty p:first-child {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    color: var(--ink);
+    margin: 0 0 6px;
+  }
+  .empty p { margin: 0; font-size: 14.5px; }
+
+  footer.bottom {
+    margin-top: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .clear-done {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: var(--line);
+    padding: 0;
+  }
+  .clear-done:hover { color: var(--danger); }
+  .stat { font-size: 13px; color: var(--ink-faint); }
+
+  .banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: var(--done-bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 0 0 28px;
+  }
+  .banner p { margin: 0; font-size: 13.5px; color: var(--ink); }
+  .banner .banner-actions { display: flex; gap: 14px; flex-shrink: 0; }
+
+  .text-btn {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: var(--line);
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+  }
+  .text-btn:hover { color: var(--danger); }
+  .text-btn.quiet:hover { color: var(--ink-soft); }
+
+  .backup-row {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .backup-status { font-size: 12.5px; color: var(--ink-faint); }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 26px; }
+    form.add .row { flex-direction: column; }
+    .wrap { padding: 40px 18px 100px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Reading List</h1>
+  </header>
+
+  <div class="banner" id="backup-banner" hidden>
+    <p>It's been a while since you backed up your list.</p>
+    <div class="banner-actions">
+      <button type="button" class="text-btn" id="banner-export">Export now</button>
+      <button type="button" class="text-btn quiet" id="banner-dismiss">Not now</button>
+    </div>
+  </div>
+
+  <form class="add" id="add-form">
+    <div class="row">
+      <input id="url-input" type="text" placeholder="Paste a link (e.g. nytimes.com/article)" autocomplete="off" required>
+    </div>
+    <div class="row">
+      <input id="title-input" type="text" placeholder="Title (optional)" autocomplete="off">
+      <input id="tag-input" type="text" placeholder="Tag (optional)" autocomplete="off">
+    </div>
+    <div class="add-actions">
+      <button type="submit" class="primary">Add to list</button>
+    </div>
+  </form>
+
+  <nav class="filters" id="filters">
+    <button data-filter="unread" class="active">To read <span class="count" id="count-unread"></span></button>
+    <button data-filter="all">All <span class="count" id="count-all"></span></button>
+    <button data-filter="done">Done <span class="count" id="count-done"></span></button>
+  </nav>
+
+  <ul class="list" id="list"></ul>
+
+  <div class="empty" id="empty" hidden>
+    <p>Nothing here yet.</p>
+    <p>Paste a link above to start your stack.</p>
+  </div>
+
+  <footer class="bottom">
+    <span class="stat" id="stat"></span>
+    <button class="clear-done" id="clear-done" hidden>Clear done</button>
+  </footer>
+
+  <div class="backup-row">
+    <button type="button" class="text-btn quiet" id="export-btn">Export backup</button>
+    <button type="button" class="text-btn quiet" id="import-btn">Import backup</button>
+    <input type="file" id="import-file" accept="application/json" hidden>
+    <span class="backup-status" id="backup-status"></span>
+  </div>
+</div>
+
+<script>
+(function () {
+  var STORAGE_KEY = 'reading-list-items-v1';
+  var INSTALLED_KEY = 'reading-list-installed-at-v1';
+  var LAST_BACKUP_KEY = 'reading-list-last-backup-v1';
+  var BANNER_DISMISS_KEY = 'reading-list-banner-dismissed-v1';
+  var BACKUP_REMIND_DAYS = 14;
+  var BANNER_SNOOZE_DAYS = 3;
+  var DAY_MS = 86400000;
+  var items = [];
+  var filter = 'unread';
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      items = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      items = [];
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch (e) { /* storage unavailable, fail quietly */ }
+  }
+
+  function setBackupStatus(text) {
+    var el = document.getElementById('backup-status');
+    el.textContent = text;
+    clearTimeout(setBackupStatus._t);
+    setBackupStatus._t = setTimeout(function () { el.textContent = ''; }, 4000);
+  }
+
+  function markBackedUp() {
+    localStorage.setItem(LAST_BACKUP_KEY, String(Date.now()));
+    document.getElementById('backup-banner').hidden = true;
+  }
+
+  function maybeShowBackupBanner() {
+    var banner = document.getElementById('backup-banner');
+    if (!banner) return;
+    if (items.length === 0) { banner.hidden = true; return; }
+
+    var installedAt = parseInt(localStorage.getItem(INSTALLED_KEY), 10) || Date.now();
+    var lastBackupRaw = localStorage.getItem(LAST_BACKUP_KEY);
+    var lastBackup = lastBackupRaw ? parseInt(lastBackupRaw, 10) : installedAt;
+    var daysSinceBackup = (Date.now() - lastBackup) / DAY_MS;
+
+    var dismissedRaw = localStorage.getItem(BANNER_DISMISS_KEY);
+    var daysSinceDismiss = dismissedRaw ? (Date.now() - parseInt(dismissedRaw, 10)) / DAY_MS : Infinity;
+
+    banner.hidden = !(daysSinceBackup >= BACKUP_REMIND_DAYS && daysSinceDismiss >= BANNER_SNOOZE_DAYS);
+  }
+
+  async function exportBackup() {
+    var data = JSON.stringify(items, null, 2);
+    var filename = 'reading-list-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+
+    if (window.claude && typeof window.claude.use === 'function') {
+      try {
+        var downloads = await window.claude.use('downloads');
+        if (downloads) {
+          await downloads.save({ filename: filename, data: data });
+          markBackedUp();
+          setBackupStatus('Backup saved.');
+          return;
+        }
+      } catch (e) {
+        if (e && e.code === 'declined') return; // viewer said no; don't nag further right now
+        // otherwise fall through to the plain-browser fallback below
+      }
+    }
+
+    try {
+      var blob = new Blob([data], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      markBackedUp();
+      setBackupStatus('Backup saved.');
+    } catch (e) {
+      setBackupStatus('Could not save a backup here.');
+    }
+  }
+
+  function importBackup(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var parsed;
+      try {
+        parsed = JSON.parse(reader.result);
+      } catch (e) {
+        setBackupStatus('That file is not valid JSON.');
+        return;
+      }
+      if (!Array.isArray(parsed)) {
+        setBackupStatus('That doesn\u2019t look like a reading list backup.');
+        return;
+      }
+      var existingIds = {};
+      items.forEach(function (it) { existingIds[it.id] = true; });
+      var added = 0;
+      parsed.forEach(function (it) {
+        if (it && typeof it.url === 'string' && it.id && !existingIds[it.id]) {
+          items.push({
+            id: String(it.id),
+            url: it.url,
+            title: typeof it.title === 'string' && it.title ? it.title : it.url,
+            tag: typeof it.tag === 'string' ? it.tag : '',
+            notes: typeof it.notes === 'string' ? it.notes : '',
+            done: !!it.done,
+            addedAt: typeof it.addedAt === 'number' ? it.addedAt : Date.now()
+          });
+          existingIds[it.id] = true;
+          added++;
+        }
+      });
+      items.sort(function (a, b) { return b.addedAt - a.addedAt; });
+      save();
+      render();
+      setBackupStatus(added === 0 ? 'Nothing new to import.' : added + ' item' + (added === 1 ? '' : 's') + ' imported.');
+    };
+    reader.onerror = function () { setBackupStatus('Could not read that file.'); };
+    reader.readAsText(file);
+  }
+
+  function normalizeUrl(raw) {
+    var v = raw.trim();
+    if (!v) return null;
+    if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+    return v;
+  }
+
+  function domainFromUrl(url) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function titleFromUrl(url) {
+    var domain = domainFromUrl(url);
+    try {
+      var pathname = new URL(url).pathname;
+      var segments = pathname.split('/').filter(Boolean);
+      var slug = segments.length ? segments[segments.length - 1] : '';
+      slug = slug.replace(/\.(html?|php|aspx?|jsp)$/i, '');
+      try { slug = decodeURIComponent(slug); } catch (e) { /* leave as-is */ }
+      slug = slug.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+      var words = slug.split(' ').filter(Boolean);
+      var looksLikeIdOrHash = /^[0-9a-f]{6,}$/i.test(slug.replace(/\s+/g, ''));
+      // Not enough real words, or looks like a hash/id — a domain is more useful.
+      if (words.length < 2 || looksLikeIdOrHash) {
+        return domain || url;
+      }
+      return slug.charAt(0).toUpperCase() + slug.slice(1);
+    } catch (e) {
+      return domain || url;
+    }
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function addItem(url, title, tag) {
+    items.unshift({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      url: url,
+      title: title && title.trim() ? title.trim() : titleFromUrl(url),
+      tag: tag && tag.trim() ? tag.trim() : '',
+      notes: '',
+      done: false,
+      addedAt: Date.now()
+    });
+    save();
+    render();
+  }
+
+  function toggleItem(id) {
+    var it = items.find(function (i) { return i.id === id; });
+    if (it) { it.done = !it.done; save(); render(); }
+  }
+
+  function removeItem(id) {
+    items = items.filter(function (i) { return i.id !== id; });
+    save();
+    render();
+  }
+
+  function clearDone() {
+    items = items.filter(function (i) { return !i.done; });
+    save();
+    render();
+  }
+
+  function setNote(id, value) {
+    var it = items.find(function (i) { return i.id === id; });
+    if (it) { it.notes = value; save(); }
+  }
+
+  function openNoteEditor(li, id) {
+    var it = items.find(function (i) { return i.id === id; });
+    if (!it) return;
+    var slot = li.querySelector('.notes-slot');
+    slot.innerHTML = '<textarea class="note-input" placeholder="Add a note...">' + escapeHtml(it.notes || '') + '</textarea>';
+    var textarea = slot.querySelector('.note-input');
+    textarea.focus();
+    var len = textarea.value.length;
+    textarea.setSelectionRange(len, len);
+    textarea.addEventListener('input', function () {
+      setNote(id, textarea.value);
+    });
+    textarea.addEventListener('blur', function () {
+      setNote(id, textarea.value.trim());
+      render();
+    });
+  }
+
+  function relativeTime(ts) {
+    var diff = Date.now() - ts;
+    var day = 86400000;
+    if (diff < 3600000) return 'just now';
+    if (diff < day) return Math.round(diff / 3600000) + 'h ago';
+    var days = Math.round(diff / day);
+    if (days === 1) return 'yesterday';
+    if (days < 7) return days + 'd ago';
+    return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  function render() {
+    var list = document.getElementById('list');
+    var empty = document.getElementById('empty');
+    var unreadCount = items.filter(function (i) { return !i.done; }).length;
+    var doneCount = items.filter(function (i) { return i.done; }).length;
+
+    document.getElementById('count-unread').textContent = unreadCount;
+    document.getElementById('count-all').textContent = items.length;
+    document.getElementById('count-done').textContent = doneCount;
+
+    var visible = items.filter(function (i) {
+      if (filter === 'unread') return !i.done;
+      if (filter === 'done') return i.done;
+      return true;
+    });
+
+    list.innerHTML = visible.map(function (i) {
+      var tagHtml = i.tag ? '<span class="tag">' + escapeHtml(i.tag) + '</span><span class="dot">&middot;</span>' : '';
+      var notesHtml = i.notes
+        ? '<p class="note-preview" tabindex="0">' + escapeHtml(i.notes) + '</p>'
+        : '<button type="button" class="note-add-btn">+ Add note</button>';
+      return (
+        '<li class="item' + (i.done ? ' done' : '') + '" data-id="' + i.id + '">' +
+          '<input type="checkbox" class="check" ' + (i.done ? 'checked' : '') + ' aria-label="Mark as done">' +
+          '<div class="card">' +
+            '<a class="title" href="' + escapeHtml(i.url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(i.title) + '</a>' +
+            '<div class="meta">' +
+              tagHtml +
+              '<span class="domain">' + escapeHtml(domainFromUrl(i.url)) + '</span>' +
+              '<span class="dot">&middot;</span>' +
+              '<span class="domain">' + relativeTime(i.addedAt) + '</span>' +
+            '</div>' +
+            '<div class="notes-slot">' + notesHtml + '</div>' +
+          '</div>' +
+          '<button class="remove" aria-label="Remove">Remove</button>' +
+        '</li>'
+      );
+    }).join('');
+
+    empty.hidden = visible.length !== 0;
+    if (visible.length === 0) {
+      var msgs = {
+        unread: ['All caught up.', 'Nothing left to read right now.'],
+        done: ['No finished articles yet.', 'Items you check off will land here.'],
+        all: ['Nothing here yet.', 'Paste a link above to start your stack.']
+      };
+      empty.children[0].textContent = msgs[filter][0];
+      empty.children[1].textContent = msgs[filter][1];
+    }
+
+    document.getElementById('clear-done').hidden = doneCount === 0;
+    document.getElementById('stat').textContent =
+      items.length === 0 ? '' : unreadCount + ' to read \u00b7 ' + doneCount + ' done';
+  }
+
+  document.getElementById('add-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var urlInput = document.getElementById('url-input');
+    var titleInput = document.getElementById('title-input');
+    var tagInput = document.getElementById('tag-input');
+    var url = normalizeUrl(urlInput.value);
+    if (!url) return;
+    addItem(url, titleInput.value, tagInput.value);
+    urlInput.value = '';
+    titleInput.value = '';
+    tagInput.value = '';
+    urlInput.focus();
+  });
+
+  document.getElementById('list').addEventListener('click', function (e) {
+    var li = e.target.closest('li.item');
+    if (!li) return;
+    var id = li.getAttribute('data-id');
+    if (e.target.classList.contains('check')) toggleItem(id);
+    if (e.target.classList.contains('remove')) removeItem(id);
+    if (e.target.classList.contains('note-add-btn') || e.target.classList.contains('note-preview')) {
+      openNoteEditor(li, id);
+    }
+  });
+
+  document.getElementById('list').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (!e.target.classList.contains('note-preview')) return;
+    e.preventDefault();
+    var li = e.target.closest('li.item');
+    if (!li) return;
+    openNoteEditor(li, li.getAttribute('data-id'));
+  });
+
+  document.getElementById('filters').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-filter]');
+    if (!btn) return;
+    filter = btn.getAttribute('data-filter');
+    document.querySelectorAll('#filters button').forEach(function (b) {
+      b.classList.toggle('active', b === btn);
+    });
+    render();
+  });
+
+  document.getElementById('clear-done').addEventListener('click', clearDone);
+
+  document.getElementById('export-btn').addEventListener('click', exportBackup);
+  document.getElementById('banner-export').addEventListener('click', exportBackup);
+  document.getElementById('banner-dismiss').addEventListener('click', function () {
+    localStorage.setItem(BANNER_DISMISS_KEY, String(Date.now()));
+    document.getElementById('backup-banner').hidden = true;
+  });
+  document.getElementById('import-btn').addEventListener('click', function () {
+    document.getElementById('import-file').click();
+  });
+  document.getElementById('import-file').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    e.target.value = '';
+    if (file) importBackup(file);
+  });
+
+  if (!localStorage.getItem(INSTALLED_KEY)) {
+    localStorage.setItem(INSTALLED_KEY, String(Date.now()));
+  }
+
+  load();
+  render();
+  maybeShowBackupBanner();
+})();
+</script>
+</body>
+</html>
