@@ -643,6 +643,10 @@
     return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 
+  function fullDateTime(ts) {
+    return new Date(ts).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
   function render() {
     var list = document.getElementById('list');
     var empty = document.getElementById('empty');
@@ -673,7 +677,7 @@
               tagHtml +
               '<span class="domain">' + escapeHtml(domainFromUrl(i.url)) + '</span>' +
               '<span class="dot">&middot;</span>' +
-              '<span class="domain">' + relativeTime(i.addedAt) + '</span>' +
+              '<span class="domain" title="' + escapeHtml(fullDateTime(i.addedAt)) + '">Added ' + relativeTime(i.addedAt) + '</span>' +
             '</div>' +
             '<div class="notes-slot">' + notesHtml + '</div>' +
           '</div>' +
